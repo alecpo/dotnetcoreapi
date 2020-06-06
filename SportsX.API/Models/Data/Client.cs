@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace SportsX.API.Models.Data
 {
@@ -21,8 +22,11 @@ namespace SportsX.API.Models.Data
 
         public int Id { get; set; }
 
+        [Required]
+        [StringLength(100)]
         public string Name { get; set; }
 
+        [StringLength(100)]
         public string CompanyName { get; set; }
 
         public string CEP { get; set; }
@@ -31,8 +35,10 @@ namespace SportsX.API.Models.Data
 
         public string CPF { get; set; }
 
+        [Required]
         public string Email { get; set; }
 
+        [Required]
         public string Status { get; set; }
 
         public bool IsDeleted { get; set; }
