@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using SportsX.API.Models;
+using SportsX.API.Models.Data;
 
-namespace SportsX.API.Data
+namespace SportsX.API.Repositories
 {
     public class SportsXContext : DbContext
     {

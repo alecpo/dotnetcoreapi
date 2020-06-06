@@ -1,8 +1,8 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using SportsX.API.Data;
-using SportsX.API.Models;
+using SportsX.API.Repositories;
+using SportsX.API.Models.Data;
+using SportsX.API.Models.Requests;
 
 namespace SportsX.API.Controllers
 {
@@ -10,70 +10,92 @@ namespace SportsX.API.Controllers
     [Route("api/[controller]")]
     public class ClientController : ControllerBase
     {
+        public readonly IRepository Repo;
 
-        public ClientController(SportsXContext context)
+        public ClientController(IRepository repo)
         {
-            Context = context;
+            Repo = repo;
         }
-
-        public SportsXContext Context { get; }
 
         [HttpGet]
-        public IActionResult Get()
+        public IActionResult GetAllOrderedByName()
         {
-            return Ok(Context.Clients);
+            var result = Repo.GetAllClients();
+            return Ok(result);
         }
 
-        [HttpPost]
-        public IActionResult Post(Client client)
+        [HttpGet("GetByName/{name}")]
+        public IActionResult GetByNameOrderedByName(string name)
         {
-            Context.Add(client);
-            Context.SaveChanges();
-            return Ok("Client successfully created");
+            var result = Repo.GetClientsByName(name);
+            return Ok(result);
+        }
+
+        //[HttpPost("phoneList")]
+        //public IActionResult PostPhoneList(Phone phone)
+        //{
+        //    Repo.Add(phone);
+        //    if (Repo.SaveChanges())
+        //    {
+        //        return Ok("Phones successfully saved");
+        //    }
+        //    return Ok("Fail on save phones");
+        //}
+
+        [HttpPost]
+        public IActionResult Post(NewClientRequest newClient)
+        {
+            Repo.Add(newClient.Client);
+
+            if (Repo.SaveChanges())
+            {
+                int clientId = newClient.Client.Id;
+
+                foreach (var phoneNumber in newClient.PhoneList)
+                {
+                    Phone tempPhone = new Phone()
+                    {
+                        ClientId = clientId,
+                        Number = phoneNumber
+                    };
+
+                    Repo.Add(tempPhone);
+                }
+
+                if (Repo.SaveChanges())
+                {
+                    var createdClient = Repo.GetClientById(clientId);
+                    return Ok(createdClient);
+                }
+                return Ok("Fail on storage client phone list");
+            }
+            return Ok("Fail on create new client");
         }
 
         [HttpPut("{id}")]
         public IActionResult Put(int id, Client updatedClient)
         {
-            var client = Context.Clients.AsNoTracking().FirstOrDefault(client => client.Id == id);
+            var client = Repo.GetClientById(id);
 
             if (client == null) return BadRequest("Client not found");
 
-            Context.Update(updatedClient);
-            Context.SaveChanges();
-            return Ok(client);
+            Repo.Update(updatedClient);
+            if (Repo.SaveChanges()) return Ok(client);
+
+            return Ok("Fail on update client");
         }
 
         [HttpDelete("{id:int}")]
-        public IActionResult Delete(int id)
+        public IActionResult Remove(int id)
         {
-            var client = Context.Clients.FirstOrDefault(client => client.Id == id);
+            var client = Repo.GetClientById(id);
 
-            if (client == null) return BadRequest("Client not found"); 
+            if (client == null) return BadRequest("Client not found");
 
-            Context.Remove(client);
-            Context.SaveChanges();
-            return Ok(Context.Clients);
-        }
+            Repo.Remove(client);
+            if (Repo.SaveChanges()) return Ok(client);
 
-        [HttpGet("{id:int}")]
-        public IActionResult GetById(int id)
-        {
-            var client = Context.Clients.FirstOrDefault(client => client.Id == id);
-
-            if (client == null) return BadRequest("Client not found.");
-
-            return Ok("Client successfully removed");
-        }
-
-        [HttpGet("{name}")]
-        public IActionResult GetByName(string name)
-        {
-            var client = Context.Clients.Where(client => client.Name.Contains(name));
-
-            if (client == null) return BadRequest("Client not found.");
-
-            return Ok(client);
+            return Ok("Fail on create new client");
         }
     }
 }

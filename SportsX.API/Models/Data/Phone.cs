@@ -1,4 +1,4 @@
-﻿namespace SportsX.API.Models
+﻿namespace SportsX.API.Models.Data
 {
     public class Phone
     {
